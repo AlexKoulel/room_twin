@@ -1,0 +1,12 @@
+{
+    "RT_MQTT_BROKER": "",
+    "RT_MQTT_PORT": 0,
+    "RT_TELEMETRY_TOPIC": "dt/room_twin/{}/telemetry",
+    "RT_STATUS_TOPIC": "dt/room_twin/{}/status",
+    "RT_CMD_TOPIC": "dt/room_twin/{}/cmd",
+    "RT_ANOMALY_TOPIC": "dt/room_twin/{}/anomaly",
+    "RT_INFLUX_URL": "",
+    "RT_INFLUX_TOKEN": "",
+    "RT_INFLUX_ORG": "dtaas",
+    "RT_INFLUX_BUCKET": "sensors"
+}
