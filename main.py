@@ -106,7 +106,7 @@ def on_message(client, userdata, msg):
         print("==================================\n")
         
         anomalies = find_anomalies(data)
-        for reason in find_anomalies(data):
+        for reason in anomalies:
                 report_anomaly(client, reason)
         if not any("invalid" in a for a in anomalies): 
             check_thresholds(client, data)
@@ -171,7 +171,7 @@ def report_anomaly(client, reason):
     write_api.write(bucket=INFLUX_BUCKET, record=point)
         
 def main():
-    client = mqtt.Client()
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.on_connect = on_connect
     client.on_message = on_message
     print("\nConnecting to MQTT broker...")

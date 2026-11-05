@@ -54,7 +54,7 @@ def on_message(client, userdata, msg):
     except Exception as e:
         print(f"Exception: {e}")
 
-client = mqtt.Client()
+client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.will_set(TOPIC_STATUS, "offline",qos=1,retain=True)
 client.on_connect = on_connect
 client.on_message = on_message

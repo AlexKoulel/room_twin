@@ -8,13 +8,13 @@ intervals:
     
 thresholds:
     temperature:
-        max: 15.0
+        max: 22.0
         min: 19.0
     humidity:
-        max: 40.0
-        min: 30.0
+        max: 60.0
+        min: 50.0
     pressure:
-        max: 1000
+        max: 1100
         min: 900
 anomaly:
     max_jump: 2.0
