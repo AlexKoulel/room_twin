@@ -1,4 +1,3 @@
-#pragma once
 #define DEVICE_ID ""
 #define WIFI_SSID ""
 #define WIFI_PASS ""
