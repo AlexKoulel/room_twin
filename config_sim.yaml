@@ -8,8 +8,8 @@ intervals:
     
 thresholds:
     temperature:
-        max: 15.0
-        min: 19.0
+        max: 20.0
+        min: 10.0
     humidity:
         max: 40.0
         min: 30.0

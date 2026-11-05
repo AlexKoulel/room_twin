@@ -36,7 +36,11 @@ TOPIC_CMD    = connections["RT_CMD_TOPIC"].format(device_id)
 interval_ms = default_interval
 
 
-def on_connect(client, userdata, flags, rc):
+def on_connect(client, userdata, flags, rc, properties):
+    if rc.is_failure:
+        print(f"Failed to connect: {rc}")
+        return
+    print("Connected to MQTT broker\n")
     client.publish(TOPIC_STATUS, "online", qos=1, retain=True)
     client.subscribe(TOPIC_CMD, qos=1)
 

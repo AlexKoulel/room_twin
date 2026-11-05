@@ -1,5 +1,5 @@
 device:
-    id: "1"
+    id: "RT_1"
     location: "Office"
 
 intervals: 
@@ -8,13 +8,13 @@ intervals:
     
 thresholds:
     temperature:
-        max: 22.0
-        min: 19.0
+        max: 20.0
+        min: 10.0
     humidity:
-        max: 60.0
-        min: 50.0
+        max: 40.0
+        min: 30.0
     pressure:
-        max: 1100
+        max: 1000
         min: 900
 anomaly:
     max_jump: 2.0

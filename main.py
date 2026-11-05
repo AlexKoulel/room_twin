@@ -63,38 +63,56 @@ RANGES = {"Temperature": (-40, 85), "Humidity": (0, 100), "Pressure": (300, 1100
 
 
 influx_client = InfluxDBClient(
-    url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
+    url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG, timeout=2000)
 write_api = influx_client.write_api(write_options=SYNCHRONOUS)
 
-def on_connect(client, userdata, flags, rc):
-    if rc == 0:
-        print("Connected to MQTT broker\n")
-        for key, (lo, hi) in LIMITS.items():
-            print(f"{key} limits: min {lo}, max {hi}")
-        print(f"Intervals: normal {normal_interval} ms, fast {fast_interval} ms\n")
-        print(f"Interval is set at {normal_interval}.\n")
-        client.subscribe(STATUS_TOPIC)
-        client.subscribe(TELEMETRY_TOPIC)
-    else:
-        print(f"Failed to connect, return code {rc}")
+def on_connect(client, userdata, flags, rc, properties):
+    if rc.is_failure:
+        print(f"Failed to connect: {rc}")
+        return
+    print("Connected to MQTT broker\n")
+    for key, (lo, hi) in LIMITS.items():
+        print(f"{key} limits: min {lo}, max {hi}")
+    print(f"Intervals: normal {normal_interval} ms, fast {fast_interval} ms\n")
+    print(f"Interval is set at {normal_interval}.\n")
+    client.subscribe(STATUS_TOPIC)
+    client.subscribe(TELEMETRY_TOPIC)
+
+
+def save_to_db(point):
+    try:
+        write_api.write(bucket=INFLUX_BUCKET, record=point)
+    except Exception as e:
+        print(f"[DB] Saving failed: {e}")
 
 def on_message(client, userdata, msg):
     global current_interval
     try:
+        payload = msg.payload.decode()
         if msg.topic == STATUS_TOPIC:
-            status = msg.payload.decode()
-            print(f"Device {device_id} is {status}")
-            if status == "online":
+            print(f"Device {device_id} is {payload}")
+            if payload == "online":
                 current_interval = None 
+            if payload == "sensor_error":
+                report_anomaly(client, "BME280 sensor failed.")
             return
         
-        data = json.loads(msg.payload.decode())
+        data = json.loads(payload)
+
+        anomalies = find_anomalies(data)
+        for reason in anomalies:
+                report_anomaly(client, reason)
+        if any("invalid" in a for a in anomalies): 
+            return
+            
+        check_thresholds(client, data)
+
         point = Point("sensor").tag("device", device_id)
         for key in ("Temperature", "Humidity", "Pressure"):
             if key in data:
                 point = point.field(key, float(data[key]))
         point = point.time(datetime.now(timezone.utc))
-        write_api.write(bucket=INFLUX_BUCKET, record=point)
+        save_to_db(point)
 
         print("\n")
         print(f"Device {device_id} - {device_location}")
@@ -104,12 +122,6 @@ def on_message(client, userdata, msg):
         print(f"Humidity: {data['Humidity']} %")
         print(f"Pressure: {data['Pressure']} hPa")
         print("==================================\n")
-        
-        anomalies = find_anomalies(data)
-        for reason in anomalies:
-                report_anomaly(client, reason)
-        if not any("invalid" in a for a in anomalies): 
-            check_thresholds(client, data)
     except Exception as e:
         print(f"Error: {e}")
     
@@ -168,7 +180,7 @@ def report_anomaly(client, reason):
     client.publish(ANOMALY_TOPIC, json.dumps({"device": device_id, "reason": reason}), qos=1)
     point = Point("anomaly").tag("device", device_id).field("reason", reason)
     point = point.time(datetime.now(timezone.utc))
-    write_api.write(bucket=INFLUX_BUCKET, record=point)
+    save_to_db(point)
         
 def main():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
