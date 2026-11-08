@@ -1,0 +1,15 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+[ -f main.py ] || cd ..
+
+if [ -f twin.pid ]; then
+    PID=$(cat twin.pid)
+    if kill "$PID" 2>/dev/null; then
+        echo "Digital twin stopped (PID $PID)."
+    else
+        echo "Process $PID was not running."
+    fi
+    rm -f twin.pid
+else
+    echo "Digital twin is not running."
+fi

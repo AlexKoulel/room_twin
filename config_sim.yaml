@@ -19,3 +19,7 @@ thresholds:
 anomaly:
     max_jump: 2.0
     frozen_count: 20
+    max_residual: 0.3
+model:
+    t_eq: 15.0
+    t: 300 #τ (seconds)

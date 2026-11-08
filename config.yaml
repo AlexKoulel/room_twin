@@ -11,11 +11,15 @@ thresholds:
         max: 20.0
         min: 10.0
     humidity:
-        max: 40.0
-        min: 30.0
+        max: 50.0
+        min: 40.0
     pressure:
-        max: 1000
-        min: 900
+        max: 1200
+        min: 1000
 anomaly:
     max_jump: 2.0
     frozen_count: 20
+    max_residual: 0.3
+model:
+    t_eq: 15.0
+    t: 300 #τ (seconds)

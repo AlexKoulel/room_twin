@@ -5,12 +5,21 @@ import time
 import argparse
 import os
 import yaml
+import math
+import sys
+import threading
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--config",default="config.yaml")
 parser.add_argument("-t",nargs=3,type=float,default=[20,25,0.1],metavar=("min","max","step"),help="Temperature maximum/minimum and step")
 parser.add_argument("-hu",nargs=3,type=float,default=[50,55,0.1],metavar=("min","max","step"),help="Humidity maximum/minimum and step")
 parser.add_argument("-p",nargs=3,type=float,default=[1000,1005,0.01],metavar=("min","max","step"),help="Pressure maximum/minimum and step")
+parser.add_argument("--scenario", choices=["random_walk", "step"], default="random_walk", help="random measurments")
+parser.add_argument("--tc", type=float, default=120.0, help="step: thermal time constant (sec)")
+parser.add_argument("--target", type=float, default=8.0, help="step: new ambient temperature after step")
+parser.add_argument("--step-at", type=float, default=60.0, help="step: seconds after the start of the step")
+parser.add_argument("--noise", type=float, default=0.05, help="step: noise of sensor")
+
 args = parser.parse_args()
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -35,6 +44,18 @@ TOPIC_CMD    = connections["RT_CMD_TOPIC"].format(device_id)
 
 interval_ms = default_interval
 
+mode = "ok"
+VALID_MODES = {"ok", "spike", "nan", "freeze"}
+
+def listen():
+    global mode
+    for line in sys.stdin:
+        command = line.strip()
+        if command in VALID_MODES:
+            mode = command
+            print(f"[ANOMALY] {mode} at {time.strftime('%H:%M:%S')}")
+        else:
+            print(f"{command} is not a valid anomaly. Valid anomalies are: {VALID_MODES}")
 
 def on_connect(client, userdata, flags, rc, properties):
     if rc.is_failure:
@@ -68,6 +89,9 @@ client.on_message = on_message
 def main():
     client.connect(BROKER,PORT, 60)
     client.loop_start()
+    global mode
+    threading.Thread(target=listen, daemon=True).start()
+    last_reading = None
     try:
         print("Temperature:", args.t)
         print("Humidity:", args.hu)
@@ -76,14 +100,34 @@ def main():
         temp = (args.t[0] + args.t[1]) / 2
         humi = (args.hu[0] + args.hu[1]) / 2
         pres = (args.p[0] + args.p[1]) / 2
-        last = time.time()
+        start = time.time()
+        last = start
+        eq = temp
         while True:
-            temp += random.uniform(-args.t[2], args.t[2])
+            now = time.time()
+            if args.scenario == "step":
+                temp += (eq - temp) * (1 - math.exp(-(now - last) / args.tc))
+                if now - start >= args.step_at:
+                    eq = args.target
+                noise = random.gauss(0, args.noise)
+            else:
+                temp += random.uniform(-args.t[2], args.t[2])
+                noise = 0
+            last = now
             humi += random.uniform(-args.hu[2], args.hu[2])
             pres += random.uniform(-args.p[2], args.p[2])
-            
+            reading = round(temp + noise, 2)
+            if mode == "spike":
+                reading += 5
+                mode = "ok"
+            elif mode == "nan":
+                reading = float("nan")
+                mode = "ok"
+            elif mode == "freeze":
+                reading = last_reading
+            last_reading = reading
             values = {
-                "Temperature": round(temp,2),
+                "Temperature": reading,
                 "Humidity": round(humi,2),
                 "Pressure": round(pres,2)
             }
