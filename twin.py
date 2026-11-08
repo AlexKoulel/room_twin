@@ -43,7 +43,8 @@ class Twin:
             self.same_count = self.same_count + 1 if temperature == self.last_temp else 0
             if self.same_count >= self.frozen_count:
                 problems.append(f"Temperature frozen at {temperature} for {self.same_count} readings")
-        self.last_temp = temperature
+        if temperature is not None and not math.isnan(temperature):
+            self.last_temp = temperature
         return problems
     
     def check_thresholds(self, data):
