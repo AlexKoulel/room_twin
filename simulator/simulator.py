@@ -17,7 +17,7 @@ parser.add_argument("-p",nargs=3,type=float,default=[1000,1005,0.01],metavar=("m
 parser.add_argument("--scenario", choices=["random_walk", "step"], default="random_walk", help="random measurments")
 parser.add_argument("--tc", type=float, default=120.0, help="step: thermal time constant (sec)")
 parser.add_argument("--target", type=float, default=8.0, help="step: new ambient temperature after step")
-parser.add_argument("--step-at", type=float, default=60.0, help="step: seconds after the start of the step")
+parser.add_argument("--step-at", type=float, default=60.0, help="Seconds that need to pass for step after the start of the simulator")
 parser.add_argument("--noise", type=float, default=0.05, help="step: noise of sensor")
 
 args = parser.parse_args()
@@ -106,7 +106,7 @@ def main():
         while True:
             now = time.time()
             if args.scenario == "step":
-                temp += (eq - temp) * (1 - math.exp(-(now - last) / args.tc))
+                temp = eq + (temp - eq) * math.exp(-(now - last) / args.tc)
                 if now - start >= args.step_at:
                     eq = args.target
                 noise = random.gauss(0, args.noise)
