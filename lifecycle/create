@@ -1,2 +1,13 @@
 #!/bin/bash
-pip install -r "$(dirname "$0")/requirements.txt"
+set -e
+cd "$(dirname "$0")"
+[ -f main.py ] || cd ..
+
+if [ ! -x .venv/bin/python ]; then
+    echo "Creating virtual environment in $(pwd)/.venv ..."
+    # --copies is needed on folders mounted from Windows, where symlinks fail
+    python3 -m venv .venv || { rm -rf .venv; python3 -m venv --copies .venv; }
+fi
+
+.venv/bin/python -m pip install -r lifecycle/requirements.txt
+echo "Environment ready. Start the twin with: bash lifecycle/execute [config]"

@@ -1,0 +1,12 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+[ -f main.py ] || cd ..
+
+if [ -f twin.pid ] && kill -0 "$(cat twin.pid)" 2>/dev/null; then
+    echo "Digital twin is already running (PID $(cat twin.pid))."
+    exit 0
+fi
+
+python -u main.py --config "${1:-config.yaml}" > twin.log 2>&1 &
+echo $! > twin.pid
+echo "Digital twin started (PID $!). Log: twin.log"

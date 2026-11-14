@@ -21,5 +21,5 @@ anomaly:
     frozen_count: 20
     max_residual: 0.3
 model:
-    t_eq: 15.0
-    t: 300 #τ (seconds)
+    t_eq: 8.0
+    t: 120 #τ (seconds)

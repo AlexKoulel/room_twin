@@ -4,4 +4,8 @@ bash "$DIR/terminate"
 cd "$DIR"
 [ -f main.py ] || cd ..
 rm -f twin.log twin.pid
+if [ "$1" = "--all" ]; then
+    rm -rf .venv
+    echo "Removed .venv."
+fi
 echo "Cleaned."

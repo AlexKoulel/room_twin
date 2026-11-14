@@ -37,13 +37,15 @@ class Twin:
         problems = find_range_problems(data,RANGES)
 
         temperature = data.get("Temperature")
+        jumped = False
         if temperature is not None and not math.isnan(temperature) and self.last_temp is not None:
             if abs(temperature - self.last_temp) > self.max_jump:
                 problems.append(f"Temperature jumped {temperature - self.last_temp:+.2f} °C.")
+                jumped = True
             self.same_count = self.same_count + 1 if temperature == self.last_temp else 0
             if self.same_count >= self.frozen_count:
                 problems.append(f"Temperature frozen at {temperature} for {self.same_count} readings")
-        if temperature is not None and not math.isnan(temperature):
+        if temperature is not None and not math.isnan(temperature) and not jumped:
             self.last_temp = temperature
         return problems
     
