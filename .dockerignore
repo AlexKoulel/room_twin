@@ -1,0 +1,7 @@
+.git
+.venv
+__pycache__
+.ipynb_checkpoints
+twin.log
+twin.pid
+room_twin_sketch
